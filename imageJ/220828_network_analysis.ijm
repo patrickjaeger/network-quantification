@@ -97,9 +97,10 @@ function create_enhanced_composite(target_img) {
   nucleus_img = getTitle();
 
   run("Median...", "radius=2");
-  run("Maximum...", "radius=4");
+  //run("Minimum...", "radius=2");
+  //run("Maximum...", "radius=4");
 
-  run("Bandpass Filter...", "filter_large=40 filter_small=3 suppress=None tolerance=5 autoscale saturate");
+  run("Bandpass Filter...", "filter_large=40 filter_small=15 suppress=None tolerance=5 autoscale saturate");
   run("Subtract Background...", "rolling=25");
   run("Enhance Contrast", "saturated=0.35");
 
@@ -151,8 +152,8 @@ function count_nuclei(target_img) {
   nucleus_img = getTitle();
 
   run("Median...", "radius=2");
-  run("Maximum...", "radius=4");
-  run("Bandpass Filter...", "filter_large=40 filter_small=3 suppress=None tolerance=5 autoscale saturate");
+  //run("Maximum...", "radius=4");
+  run("Bandpass Filter...", "filter_large=40 filter_small=15 suppress=None tolerance=5 autoscale saturate");
   //run("Subtract Background...", "rolling=20 disable");
   
   setAutoThreshold("Otsu dark");
@@ -183,8 +184,19 @@ function quant_networks(target_img, output) {
   selectPattern("C2-");
   actin_img = getTitle();
 
-  // Segmentation; filter_small determines how much crap is segmented later
-  run("Bandpass Filter...", "filter_large=50 filter_small=8 suppress=None tolerance=5 autoscale saturate");
+  // Segmentation
+  
+  //// This was fine for study 1, but struggled with "particle noise" in study 2
+  //run("Bandpass Filter...", "filter_large=50 filter_small=8 suppress=None tolerance=5 autoscale saturate");
+  //setAutoThreshold("Huang dark");
+  //setOption("BlackBackground", true);
+  //run("Convert to Mask");
+
+  //// This worked well in study 2, but is too sensitive for some images in study 1
+  run("Bandpass Filter...", "filter_large=50 filter_small=7 suppress=None tolerance=5 autoscale saturate");
+  run("Bandpass Filter...", "filter_large=50 filter_small=3 suppress=None tolerance=5 autoscale saturate");
+  run("Subtract Background...", "rolling=25");
+  run("Maximum...", "radius=5");
   setAutoThreshold("Huang dark");
   setOption("BlackBackground", true);
   run("Convert to Mask");

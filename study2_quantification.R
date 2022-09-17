@@ -4,8 +4,8 @@ source("geom_hpline.R")
 
 # Import data -------------------------------------------------------------
 px2um_scale <- 1.3221  # px/micron
-results_path <- "data/network1_results_csv/"
-additive <- "_P2CK_"
+results_path <- "data/network2_results_csv/"
+additive <- "_GM6001_"
 
 branch_files <- list.files(results_path,
                            pattern = "branch-info",
@@ -55,6 +55,16 @@ get_network_count <- function(.df) {
   nrow(.df)
 }
 
+get_median_network <- function(.df) {
+  
+  lengths <- .df %>% 
+    select(junctions_voxels = `# Junction voxels`, 
+           slab_voxels = `# Slab voxels`) %>% 
+    transmute(length = (junctions_voxels + slab_voxels)/px2um_scale)
+  
+  median(lengths$length)
+}
+
 dat_plot <- dat_raw %>% 
   mutate(total_network = map_dbl(network,
                                  get_network_length),
@@ -63,6 +73,7 @@ dat_plot <- dat_raw %>%
                                    .return_longest = TRUE)) %>% 
   mutate(network_count = map_int(network, get_network_count),
          mean_network_length = total_network/network_count) %>% 
+  mutate(median_network_length = map_dbl(network, get_median_network)) %>% 
   select(-network, -branch) %>% 
   mutate(norm_total_network = total_network/count,
          norm_longest_network = longest_network/count) %>% 
@@ -93,8 +104,8 @@ ggplot(dat_plot,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
-# ggsave("results/network1_total_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
+# ggsave("results/network2_total_length.svg",
+#        width = 300, height = 330, units = "px", dpi = 72)
 
 # Per cell
 ggplot(dat_plot, 
@@ -115,8 +126,28 @@ ggplot(dat_plot,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue")) 
 
-# ggsave("results/network1_norm_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
+# ggsave("results/network2_norm_length.svg",
+#        width = 300, height = 330, units = "px", dpi = 72)
+
+
+# Longest connected network
+# ggplot(dat_plot, 
+#        aes(day, longest_network, 
+#            group = interaction(day, grid), color = grid)) +
+#   stat_summary(geom = "hpline", width = 0.4,
+#                position = position_dodge(width = 0.9), alpha = 0.8) +
+#   geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+#                                               dodge.width = 0.9),
+#               pch = 1, show.legend = FALSE) +
+#   facet_wrap(~additive) +
+#   theme_bw() +
+#   labs(x = "Day",
+#        y = "Longest connected network length [μm]",
+#        color = element_blank()) +
+#   theme(legend.position = "bottom",
+#         panel.grid = element_blank(),
+#         strip.background=element_rect(fill="white")) +
+#   scale_color_manual(values = c("black", "dodgerblue"))
 
 # Connectivity
 ggplot(dat_plot, 
@@ -137,7 +168,7 @@ ggplot(dat_plot,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
-# ggsave("results/network1_avg_network_length.svg",
+# ggsave("results/network2_avg_network_length.svg",
        # width = 300, height = 330, units = "px", dpi = 72)
 
 
@@ -146,7 +177,7 @@ ggplot(dat_plot,
 dat_sample_results <- dat_plot
 dat_sample_results %>% print(n = nrow(.))
 
-# write_csv(dat_sample_results, "results/network1_results_by_sample.csv")
+# write_csv(dat_sample_results, "results/network2_results_by_sample.csv")
 
 dat_summary <- dat_plot %>% 
   group_by(additive, day, grid) %>% 
@@ -158,9 +189,9 @@ dat_summary <- dat_plot %>%
             sd_norm_network = sd(norm_total_network),
             avg_network_length = mean(mean_network_length),
             sd_network_length = sd(mean_network_length))
-dat_sample_results %>% print(n = nrow(.))
+dat_summary %>% print(n = nrow(.))
 
-# write_csv(dat_summary, "results/network1_results_summary.csv")
+# write_csv(dat_summary, "results/network2_results_summary.csv")
 
 
 
