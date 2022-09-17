@@ -1,7 +1,7 @@
 # network-quantification
 
 ## Overview
-![cell network](3d_view.png =400x)
+![cell network](3d_view_small.png)
 Automated quantification of cellular spreading and connectivity inside hydrogels patterned 
 with laser ablation. ImageJ is used identify individual nuclei and skeletonize cell networks, as well as 
 visualzing the results as overlay over the original images.
