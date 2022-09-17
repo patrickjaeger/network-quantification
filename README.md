@@ -19,9 +19,9 @@ different segmentation approach for both.
 1. Save your images as individual .tif-files in one folder. Give them clear names. Separate tags with underscores.
 2. Run the macro.
 3. Output:
-  - one folder with results images
-  - one folder with 3 types of .csv-files: one file containing the nuclear counts for all images; network and branch 
-  information for each image
+    - one folder with results images
+    - one folder with 3 types of .csv-files: one file containing the nuclear counts for all images; network and branch 
+    information for each image
 
 ### R
 Metrics:
