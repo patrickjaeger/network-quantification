@@ -27,6 +27,8 @@ different segmentation approach for both.
     information for each image
 
 ### R
+Copy your results into the RStudio project folder. Then run the scripts.
+
 Metrics:
 - total network length: total length of all skeletons that were identified in a given image
 - longest network length: total length of the longes coherent network in a given image
