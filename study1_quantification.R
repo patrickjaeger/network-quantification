@@ -4,7 +4,7 @@ source("geom_hpline.R")
 
 # Import data -------------------------------------------------------------
 px2um_scale <- 1.3221  # px/micron
-results_path <- "data/network1_results_csv/"
+results_path <- "data/network1_noprune_results_csv/"
 additive <- "_P2CK_"
 
 branch_files <- list.files(results_path,
@@ -44,8 +44,9 @@ get_network_length <- function(.df, .return_longest = FALSE) {
   # Plus, conversion of pixels to micron: scale = 1.3221 px/micron
   lengths <- .df %>% 
     select(junctions_voxels = `# Junction voxels`, 
-           slab_voxels = `# Slab voxels`) %>% 
-    transmute(length = (junctions_voxels + slab_voxels)/px2um_scale)
+           slab_voxels = `# Slab voxels`,
+           end_voxels = `# End-point voxels`) %>% 
+    transmute(length = (junctions_voxels + slab_voxels + end_voxels)/px2um_scale)
   
   if (.return_longest) max(lengths) else sum(lengths)
 }
@@ -70,6 +71,73 @@ dat_plot <- dat_raw %>%
   # mutate(grid = ifelse(grid == "grid", "grid", "control")) %>% 
   mutate(grid = as_factor(grid) %>% fct_relevel("gel", "grid"))
 dat_plot
+
+
+# branch histogram --------------------------------------------------------
+
+## network length quantified through branch files
+dat_plot_branch <- dat_raw %>% select(-network) %>% unnest(branch) %>% 
+  ungroup() %>% 
+  group_by(day, additive, sample, grid) %>% 
+  summarise(n_skeletons = n(),
+            total_length = sum(`Branch length`)/px2um_scale)
+
+ggplot(dat_plot_branch, 
+       aes(day, total_length, 
+           group = interaction(day, grid), color = grid)) +
+  stat_summary(geom = "hpline", width = 0.4,
+               position = position_dodge(width = 0.9), alpha = 0.8) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+                                              dodge.width = 0.9),
+              pch = 1, show.legend = FALSE) +
+  facet_wrap(~additive) +
+  theme_bw() +
+  labs(x = "Day",
+       y = "Total network length [μm]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+
+## branch length histogram
+dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
+
+ggplot(dat_plot_branch_2 %>% filter(`Branch length` > 10), 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly() +
+  facet_wrap(day~additive, nrow = 3)
+
+
+## average branch length comparison
+dat_plot_avg_branch <- dat_raw %>% select(-branch) %>% unnest(network) %>% 
+  ungroup() %>% 
+  group_by(day, additive, grid, sample) %>% 
+  summarise(n_skeletons = n(),
+           
+            avg_branch_length = mean(`Average Branch Length`))
+
+ggplot(dat_plot_avg_branch, 
+       aes(day, avg_branch_length, 
+           group = interaction(day, grid), color = grid)) +
+  stat_summary(geom = "hpline", width = 0.4,
+               position = position_dodge(width = 0.9), alpha = 0.8) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+                                              dodge.width = 0.9),
+              pch = 1, show.legend = FALSE) +
+  facet_wrap(~additive) +
+  theme_bw() +
+  labs(x = "Day",
+       y = "Total network length [μm]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
 
 
 # Plot --------------------------------------------------------------------
