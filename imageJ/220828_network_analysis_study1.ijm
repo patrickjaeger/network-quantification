@@ -74,6 +74,7 @@ function max_proj_plus(target_img) {
 // Z-projection plus isolation of relevant channels
   selectWindow(target_img);
   run("Arrange Channels...", "new=12");  // C1: nuclei; C2: actin; C3: trash
+  wait(100);
   run("Z Project...", "projection=[Max Intensity]");
 }
 
@@ -201,7 +202,7 @@ function quant_networks(target_img, output) {
   //run("Convert to Mask");
   //for (i = 0; i < 5; i++) run("Dilate");
 
-  run("Analyze Skeleton (2D/3D)", "prune=none prune_0 show");
+  run("Analyze Skeleton (2D/3D)", "prune=none show");
   /* Analyze Skeleton
    *  Output: 
    *  - Branch information

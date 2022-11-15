@@ -210,7 +210,7 @@ function quant_networks(target_img, output) {
   //run("Convert to Mask");
   //for (i = 0; i < 5; i++) run("Dilate");
 
-  run("Analyze Skeleton (2D/3D)", "prune=none prune_0 show");
+  run("Analyze Skeleton (2D/3D)", "prune=none show");
   /* Analyze Skeleton
    *  Output: 
    *  - Branch information
