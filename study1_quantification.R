@@ -104,13 +104,59 @@ ggplot(dat_plot_branch,
 ## branch length histogram
 dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
 
-ggplot(dat_plot_branch_2 %>% filter(`Branch length` > 10), 
+### all branches
+ggplot(dat_plot_branch_2, 
        aes(`Branch length`/px2um_scale, 
            group = interaction(day, additive, grid), 
            color = grid)) +
   # geom_density() +
-  geom_freqpoly() +
-  facet_wrap(day~additive, nrow = 3)
+  geom_freqpoly(bins = 50) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+### short branches
+ggplot(dat_plot_branch_2 %>% filter(`Branch length` < 50), 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly(bins = 30) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank(),
+       title = "Short branch distribution (<50μm)") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+  
+
+### long branches
+ggplot(dat_plot_branch_2 %>% filter(`Branch length` >= 50), 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly(bins = 30) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank(),
+       title = "Long branch distribution (>50μm)") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
 
 
 ## average branch length comparison
