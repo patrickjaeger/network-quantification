@@ -4,7 +4,7 @@ source("geom_hpline.R")
 
 # Import data -------------------------------------------------------------
 px2um_scale <- 1.3221  # px/micron
-results_path <- "data/network2_results_csv/"
+results_path <- "data/network2_noprune_results_csv/"
 additive <- "_GM6001_"
 
 branch_files <- list.files(results_path,
@@ -81,6 +81,122 @@ dat_plot <- dat_raw %>%
   # mutate(grid = ifelse(grid == "grid", "grid", "control")) %>% 
   mutate(grid = as_factor(grid) %>% fct_relevel("gel", "grid"))
 dat_plot
+
+
+# branch histogram --------------------------------------------------------
+
+## network length quantified through branch files
+dat_plot_branch <- dat_raw %>% select(-network) %>% unnest(branch) %>% 
+  ungroup() %>% 
+  filter(`Branch length` > 10) %>% 
+  group_by(day, additive, sample, grid, count) %>% 
+  summarise(n_skeletons = n_distinct(`Skeleton ID`),
+            total_length = sum(`Branch length`)/px2um_scale) %>% 
+  mutate(norm_length = total_length/count)
+dat_plot_branch
+
+ggplot(dat_plot_branch, 
+       aes(day, total_length, 
+           group = interaction(day, grid), color = grid)) +
+  stat_summary(geom = "hpline", width = 0.4,
+               position = position_dodge(width = 0.9), alpha = 0.8) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+                                              dodge.width = 0.9),
+              pch = 1, show.legend = FALSE) +
+  facet_wrap(~additive) +
+  theme_bw() +
+  labs(x = "Day",
+       y = "Total network length [μm]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+
+## branch length histogram
+dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
+
+### all branches
+ggplot(dat_plot_branch_2, 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly(bins = 50) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+### short branches
+ggplot(dat_plot_branch_2 %>% filter(`Branch length` < 50), 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly(bins = 30) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank(),
+       title = "Short branch distribution (<50μm)") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+  
+
+### long branches
+ggplot(dat_plot_branch_2 %>% filter(`Branch length` >= 50), 
+       aes(`Branch length`/px2um_scale, 
+           group = interaction(day, additive, grid), 
+           color = grid)) +
+  # geom_density() +
+  geom_freqpoly(bins = 30) +
+  facet_wrap(day~additive, nrow = 3) +
+  theme_bw() +
+  labs(x = "Branch length [μm]",
+       y = "Count [n]",
+       color = element_blank(),
+       title = "Long branch distribution (>50μm)") +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+
+## average branch length comparison
+dat_plot_avg_branch <- dat_raw %>% select(-branch) %>% unnest(network) %>% 
+  ungroup() %>% 
+  group_by(day, additive, grid, sample) %>% 
+  summarise(n_skeletons = n(),
+           
+            avg_branch_length = mean(`Average Branch Length`))
+
+ggplot(dat_plot_avg_branch, 
+       aes(day, avg_branch_length, 
+           group = interaction(day, grid), color = grid)) +
+  stat_summary(geom = "hpline", width = 0.4,
+               position = position_dodge(width = 0.9), alpha = 0.8) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+                                              dodge.width = 0.9),
+              pch = 1, show.legend = FALSE) +
+  facet_wrap(~additive) +
+  theme_bw() +
+  labs(x = "Day",
+       y = "Total network length [μm]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
 
 
 # Plot --------------------------------------------------------------------
