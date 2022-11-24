@@ -78,9 +78,11 @@ dat_plot
 ## network length quantified through branch files
 dat_plot_branch <- dat_raw %>% select(-network) %>% unnest(branch) %>% 
   ungroup() %>% 
-  group_by(day, additive, sample, grid) %>% 
+  group_by(day, additive, sample, grid, count) %>% 
   summarise(n_skeletons = n(),
-            total_length = sum(`Branch length`)/px2um_scale)
+            total_length = sum(`Branch length`)/px2um_scale) %>% 
+  mutate(length_per_cell = total_length/count)
+dat_plot_branch
 
 dat_plot %>% 
   group_by(additive, day, grid) %>% 
@@ -108,6 +110,29 @@ ggplot(dat_plot_branch,
 
 # ggsave("results/network1_norm_length.svg",
        # width = 300, height = 330, units = "px", dpi = 72)
+
+## network length per cell
+ggplot(dat_plot_branch, 
+       aes(day, length_per_cell, 
+           group = interaction(day, grid), color = grid)) +
+  stat_summary(geom = "hpline", width = 0.4,
+               position = position_dodge(width = 0.9), alpha = 0.8) +
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+                                              dodge.width = 0.9),
+              pch = 1, show.legend = FALSE) +
+  facet_wrap(~additive) +
+  theme_bw() +
+  labs(x = "Day",
+       y = "Total network length [μm]",
+       color = element_blank()) +
+  theme(legend.position = "bottom",
+        panel.grid = element_blank(),
+        strip.background=element_rect(fill="white")) +
+  scale_color_manual(values = c("black", "dodgerblue"))
+
+ ggsave("results/network1_norm_length.svg",
+       # width = 300, height = 330, units = "px", dpi = 72)
+
 
 ## branch length histogram
 dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
