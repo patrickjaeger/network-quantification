@@ -82,6 +82,12 @@ dat_plot_branch <- dat_raw %>% select(-network) %>% unnest(branch) %>%
   summarise(n_skeletons = n(),
             total_length = sum(`Branch length`)/px2um_scale)
 
+dat_plot %>% 
+  group_by(additive, day, grid) %>% 
+  summarise(n = n()) %>% 
+  pluck("n") %>% 
+  sum() 
+
 ggplot(dat_plot_branch, 
        aes(day, total_length, 
            group = interaction(day, grid), color = grid)) +
@@ -100,6 +106,8 @@ ggplot(dat_plot_branch,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
+# ggsave("results/network1_norm_length.svg",
+       # width = 300, height = 330, units = "px", dpi = 72)
 
 ## branch length histogram
 dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
@@ -164,95 +172,26 @@ dat_plot_avg_branch <- dat_raw %>% select(-branch) %>% unnest(network) %>%
   ungroup() %>% 
   group_by(day, additive, grid, sample) %>% 
   summarise(n_skeletons = n(),
-           
-            avg_branch_length = mean(`Average Branch Length`))
+            avg_branch_length = mean(`Average Branch Length`),
+            median_branch_length = median(`Average Branch Length`))
 
 ggplot(dat_plot_avg_branch, 
        aes(day, avg_branch_length, 
            group = interaction(day, grid), color = grid)) +
   stat_summary(geom = "hpline", width = 0.4,
                position = position_dodge(width = 0.9), alpha = 0.8) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
+  geom_jitter(position = position_jitterdodge(jitter.width = 0.2,
                                               dodge.width = 0.9),
               pch = 1, show.legend = FALSE) +
   facet_wrap(~additive) +
   theme_bw() +
   labs(x = "Day",
-       y = "Total network length [μm]",
+       y = "Avg. branch length [μm]",
        color = element_blank()) +
   theme(legend.position = "bottom",
         panel.grid = element_blank(),
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
-
-
-# Plot --------------------------------------------------------------------
-
-## Total
-ggplot(dat_plot, 
-       aes(day, total_network, 
-           group = interaction(day, grid), color = grid)) +
-  stat_summary(geom = "hpline", width = 0.4,
-               position = position_dodge(width = 0.9), alpha = 0.8) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
-                                              dodge.width = 0.9),
-              pch = 1, show.legend = FALSE) +
-  facet_wrap(~additive) +
-  theme_bw() +
-  labs(x = "Day",
-       y = "Total network length [μm]",
-       color = element_blank()) +
-  theme(legend.position = "bottom",
-        panel.grid = element_blank(),
-        strip.background=element_rect(fill="white")) +
-  scale_color_manual(values = c("black", "dodgerblue"))
-
-# ggsave("results/network1_total_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
-
-# Per cell
-ggplot(dat_plot, 
-       aes(day, norm_total_network, 
-           group = interaction(day, grid), color = grid)) +
-  stat_summary(geom = "hpline", width = 0.4,
-               position = position_dodge(width = 0.9), alpha = 0.8) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
-                                              dodge.width = 0.9),
-              pch = 1, show.legend = FALSE) +
-  facet_wrap(~additive) +
-  theme_bw() +
-  labs(x = "Day",
-       y = "Network length per cell [μm]",
-       color = element_blank()) +
-  theme(legend.position = "bottom",
-        panel.grid = element_blank(),
-        strip.background=element_rect(fill="white")) +
-  scale_color_manual(values = c("black", "dodgerblue")) 
-
-# ggsave("results/network1_norm_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
-
-# Connectivity
-ggplot(dat_plot, 
-       aes(day, mean_network_length, 
-           group = interaction(day, grid), color = grid)) +
-  stat_summary(geom = "hpline", width = 0.4,
-               position = position_dodge(width = 0.9), alpha = 0.8) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, 
-                                              dodge.width = 0.9),
-              pch = 1, show.legend = FALSE) +
-  facet_wrap(~additive) +
-  theme_bw() +
-  labs(x = "Day",
-       y = "Average network length [μm]",
-       color = element_blank()) +
-  theme(legend.position = "bottom",
-        panel.grid = element_blank(),
-        strip.background=element_rect(fill="white")) +
-  scale_color_manual(values = c("black", "dodgerblue"))
-
-# ggsave("results/network1_avg_network_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
 
 
 # Numeric results ---------------------------------------------------------
