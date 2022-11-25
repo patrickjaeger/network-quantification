@@ -118,7 +118,7 @@ ggplot(dat_plot_branch,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
-ggsave("results/network1_length_per_cell.svg",
+ggsave("results/study1_new/network1_length_per_cell.svg",
        width = 300, height = 330, units = "px", dpi = 72)
 
 
