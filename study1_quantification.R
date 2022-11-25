@@ -21,6 +21,7 @@ dat_raw <-
   read_csv(nucleus_file) %>%
   select(Slice, Count) %>% 
   rename_with(tolower, everything()) %>% 
+  rename(cell_count = count) %>% 
   mutate(slice = str_remove(slice, "C1-MAX_")) %>% 
   mutate(slice = str_replace(slice, "_\\-_", "_control_")) %>% 
   mutate(slice = str_replace(slice, "_\\+_", additive)) %>% 
@@ -56,40 +57,27 @@ get_network_count <- function(.df) {
   nrow(.df)
 }
 
-dat_plot <- dat_raw %>% 
-  mutate(total_network = map_dbl(network,
-                                 get_network_length),
-         longest_network = map_dbl(network,
-                                   get_network_length,
-                                   .return_longest = TRUE)) %>% 
-  mutate(network_count = map_int(network, get_network_count),
-         mean_network_length = total_network/network_count) %>% 
-  select(-network, -branch) %>% 
-  mutate(norm_total_network = total_network/count,
-         norm_longest_network = longest_network/count) %>% 
-  mutate(day = as_factor(day)) %>% 
-  # mutate(grid = ifelse(grid == "grid", "grid", "control")) %>% 
-  mutate(grid = as_factor(grid) %>% fct_relevel("gel", "grid"))
-dat_plot
-
 
 # branch histogram --------------------------------------------------------
 
 ## network length quantified through branch files
 dat_plot_branch <- dat_raw %>% select(-network) %>% unnest(branch) %>% 
   ungroup() %>% 
-  group_by(day, additive, sample, grid, count) %>% 
+  group_by(day, additive, sample, grid, cell_count) %>% 
   summarise(n_skeletons = n(),
             total_length = sum(`Branch length`)/px2um_scale) %>% 
-  mutate(length_per_cell = total_length/count)
+  mutate(length_per_cell = total_length/cell_count)
 dat_plot_branch
 
-dat_plot %>% 
+write_csv(dat_plot_branch, "results/study1_new/network1_results_by_sample.csv")
+
+dat_plot_branch %>% 
   group_by(additive, day, grid) %>% 
   summarise(n = n()) %>% 
   pluck("n") %>% 
   sum() 
 
+## total network ----
 ggplot(dat_plot_branch, 
        aes(day, total_length, 
            group = interaction(day, grid), color = grid)) +
@@ -108,10 +96,10 @@ ggplot(dat_plot_branch,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
-# ggsave("results/network1_norm_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
+ggsave("results/study1_new/network1_total_length.svg",
+       width = 300, height = 330, units = "px", dpi = 72)
 
-## network length per cell
+## network length per cell ----
 ggplot(dat_plot_branch, 
        aes(day, length_per_cell, 
            group = interaction(day, grid), color = grid)) +
@@ -123,21 +111,21 @@ ggplot(dat_plot_branch,
   facet_wrap(~additive) +
   theme_bw() +
   labs(x = "Day",
-       y = "Total network length [μm]",
+       y = "Network length per cell [μm]",
        color = element_blank()) +
   theme(legend.position = "bottom",
         panel.grid = element_blank(),
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
- ggsave("results/network1_norm_length.svg",
-       # width = 300, height = 330, units = "px", dpi = 72)
+ggsave("results/network1_length_per_cell.svg",
+       width = 300, height = 330, units = "px", dpi = 72)
 
 
-## branch length histogram
+## branch length histogram ----
 dat_plot_branch_2 <- dat_raw %>% select(-network) %>% unnest(branch)
 
-### all branches
+### all branches ----
 ggplot(dat_plot_branch_2, 
        aes(`Branch length`/px2um_scale, 
            group = interaction(day, additive, grid), 
@@ -154,7 +142,11 @@ ggplot(dat_plot_branch_2,
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
-### short branches
+ggsave("results/study1_new/network1_branch_lengths_histogram.svg",
+       width = 300, height = 330, units = "px", dpi = 72)
+
+
+### short branches ----
 ggplot(dat_plot_branch_2 %>% filter(`Branch length` < 50), 
        aes(`Branch length`/px2um_scale, 
            group = interaction(day, additive, grid), 
@@ -172,8 +164,11 @@ ggplot(dat_plot_branch_2 %>% filter(`Branch length` < 50),
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
   
+ggsave("results/study1_new/network1_short_branch_lengths_histogram.svg",
+       width = 300, height = 330, units = "px", dpi = 72)
 
-### long branches
+
+### long branches ----
 ggplot(dat_plot_branch_2 %>% filter(`Branch length` >= 50), 
        aes(`Branch length`/px2um_scale, 
            group = interaction(day, additive, grid), 
@@ -191,8 +186,11 @@ ggplot(dat_plot_branch_2 %>% filter(`Branch length` >= 50),
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
 
+ggsave("results/study1_new/network1_long_branch_lengths_histogram.svg",
+       width = 300, height = 330, units = "px", dpi = 72)
 
-## average branch length comparison
+
+## average branch length comparison - is shit ----
 dat_plot_avg_branch <- dat_raw %>% select(-branch) %>% unnest(network) %>% 
   ungroup() %>% 
   group_by(day, additive, grid, sample) %>% 
@@ -217,34 +215,4 @@ ggplot(dat_plot_avg_branch,
         panel.grid = element_blank(),
         strip.background=element_rect(fill="white")) +
   scale_color_manual(values = c("black", "dodgerblue"))
-
-
-# Numeric results ---------------------------------------------------------
-
-dat_sample_results <- dat_plot
-dat_sample_results %>% print(n = nrow(.))
-
-# write_csv(dat_sample_results, "results/network1_results_by_sample.csv")
-
-dat_summary <- dat_plot %>% 
-  group_by(additive, day, grid) %>% 
-  summarise(mean_cell_count = mean(count),
-            sd_cell_count = sd(count),
-            mean_total_network = mean(total_network),
-            sd_total_network = sd(total_network),
-            mean_norm_network = mean(norm_total_network),
-            sd_norm_network = sd(norm_total_network),
-            avg_network_length = mean(mean_network_length),
-            sd_network_length = sd(mean_network_length))
-dat_sample_results %>% print(n = nrow(.))
-
-# write_csv(dat_summary, "results/network1_results_summary.csv")
-
-
-
-
-
-
-
-
 
